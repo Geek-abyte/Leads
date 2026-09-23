@@ -337,3 +337,28 @@ button.danger:hover{border-color:var(--danger);}
   .column{flex:0 0 86vw; width:86vw;}
   .modalfoot button{min-width:100%;}
 }
+
+/* Auth */
+.auth-screen{
+  min-height:100dvh; display:flex; align-items:center; justify-content:center;
+  padding:24px 16px;
+  background:var(--ink);
+}
+.auth-card{
+  width:100%; max-width:400px; background:var(--surface);
+  border:1px solid var(--line); border-radius:12px; padding:28px 24px;
+}
+.auth-brand{margin-bottom:16px; font-size:1.15rem;}
+.auth-card h1{margin:0 0 6px; font-size:1.25rem;}
+.auth-card .hint{color:var(--sub); font-size:.82rem; margin:0 0 20px; line-height:1.45;}
+.auth-error{
+  background:rgba(232,98,61,.12); border:1px solid rgba(232,98,61,.4);
+  color:var(--hot); font-size:.8rem; padding:8px 10px; border-radius:6px;
+  margin-bottom:12px; line-height:1.4;
+}
+.auth-submit{width:100%; margin-top:4px; padding:10px 14px; font-size:.9rem;}
+.auth-switch{
+  width:100%; margin-top:12px; padding:8px; font-size:.8rem;
+  color:var(--sub); border-color:transparent;
+}
+.auth-switch:hover{color:var(--accent); border-color:var(--line);}

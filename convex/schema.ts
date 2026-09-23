@@ -1,7 +1,10 @@
 import { defineSchema, defineTable } from "convex/server";
+import { authTables } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 
-export default defineSchema({
+const schema = defineSchema({
+  ...authTables,
+
   leads: defineTable({
     name: v.string(),
     contact: v.string(),
@@ -26,3 +29,5 @@ export default defineSchema({
     stages: v.array(v.string()),
   }),
 });
+
+export default schema;

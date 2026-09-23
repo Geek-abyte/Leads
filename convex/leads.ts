@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { requireTeam } from "./authz";
 
 const leadFields = {
   name: v.string(),
@@ -21,6 +22,7 @@ const leadFields = {
 export const list = query({
   args: {},
   handler: async (ctx) => {
+    await requireTeam(ctx);
     return await ctx.db.query("leads").collect();
   },
 });
@@ -28,6 +30,7 @@ export const list = query({
 export const get = query({
   args: { id: v.id("leads") },
   handler: async (ctx, { id }) => {
+    await requireTeam(ctx);
     return await ctx.db.get(id);
   },
 });
@@ -35,6 +38,7 @@ export const get = query({
 export const add = mutation({
   args: leadFields,
   handler: async (ctx, args) => {
+    await requireTeam(ctx);
     return await ctx.db.insert("leads", args);
   },
 });
@@ -42,6 +46,7 @@ export const add = mutation({
 export const update = mutation({
   args: { id: v.id("leads"), ...leadFields },
   handler: async (ctx, { id, ...fields }) => {
+    await requireTeam(ctx);
     await ctx.db.patch(id, fields);
   },
 });
@@ -49,6 +54,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("leads") },
   handler: async (ctx, { id }) => {
+    await requireTeam(ctx);
     await ctx.db.delete(id);
   },
 });
@@ -56,6 +62,7 @@ export const remove = mutation({
 export const logTouch = mutation({
   args: { id: v.id("leads") },
   handler: async (ctx, { id }) => {
+    await requireTeam(ctx);
     const lead = await ctx.db.get(id);
     if (!lead) throw new Error("Lead not found");
 
@@ -96,6 +103,7 @@ export const logTouch = mutation({
 export const setStage = mutation({
   args: { id: v.id("leads"), stage: v.string() },
   handler: async (ctx, { id, stage }) => {
+    await requireTeam(ctx);
     const lead = await ctx.db.get(id);
     if (!lead) return;
     const patch: { stage: string; heat?: string } = { stage };
@@ -111,6 +119,7 @@ export const setStage = mutation({
 export const setHeat = mutation({
   args: { id: v.id("leads"), heat: v.string() },
   handler: async (ctx, { id, heat }) => {
+    await requireTeam(ctx);
     await ctx.db.patch(id, { heat, heatPinned: true });
   },
 });
@@ -118,6 +127,7 @@ export const setHeat = mutation({
 export const setNextFollowUp = mutation({
   args: { id: v.id("leads"), nextFollowUp: v.string() },
   handler: async (ctx, { id, nextFollowUp }) => {
+    await requireTeam(ctx);
     await ctx.db.patch(id, { nextFollowUp });
   },
 });

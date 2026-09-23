@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
+import { useConvexAuth, useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import KanbanBoard from "./KanbanBoard";
+import SignIn from "./SignIn";
 
 type Lead = {
   _id: Id<"leads">;
@@ -72,6 +74,16 @@ const emptyForm = {
 const LS_ONBOARDED = "ldg_onboarded";
 
 export default function App() {
+  const { isLoading, isAuthenticated } = useConvexAuth();
+
+  if (isLoading) return <div className="empty">Loading…</div>;
+  if (!isAuthenticated) return <SignIn />;
+
+  return <Workspace />;
+}
+
+function Workspace() {
+  const { signOut } = useAuthActions();
   const leads = useQuery(api.leads.list) ?? [];
   const settings = useQuery(api.settings.get);
 
@@ -315,6 +327,13 @@ export default function App() {
           ? Help
         </button>
         <button onClick={openSettings}>Settings</button>
+        <button
+          className="ghost"
+          title="Sign out"
+          onClick={() => void signOut()}
+        >
+          Sign out
+        </button>
       </header>
 
       <main>
