@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ledger — Lead Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1B1D22; --surface:#24272E; --surface2:#2C3038; --line:#3A3F49;
+  --text:#E7E4DC; --sub:#9AA0AC;
+  --accent:#4C8BF5; --hot:#E8623D; --warm:#E8A83D; --cold:#5B8AC7;
+  --good:#4FAE7C; --danger:#E8623D;
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --ink:#F6F4EE; --surface:#FFFFFF; --surface2:#F0EEE6; --line:#DEDBD1;
+    --text:#22242B; --sub:#6B6F79;
+  }
+}
+:root[data-theme="dark"]{ --ink:#1B1D22; --surface:#24272E; --surface2:#2C3038; --line:#3A3F49; --text:#E7E4DC; --sub:#9AA0AC; }
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0; background:var(--ink); color:var(--text);
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.mono{font-family:"IBM Plex Mono",monospace;}
+header.topbar{
+  position:sticky; top:0; z-index:5; padding:16px 20px; padding-top:calc(16px + env(safe-area-inset-top,0px));
+  background:var(--ink); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:24px; flex-wrap:wrap;
+}
+.brand{font-weight:700; font-size:1.05rem; letter-spacing:.2px; white-space:nowrap;}
+.stats{display:flex; gap:22px; flex-wrap:wrap; flex:1;}
+.stat{display:flex; flex-direction:column; line-height:1.15;}
+.stat .num{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:1.15rem;}
+.stat .lbl{font-size:.72rem; color:var(--sub);}
+.stat.warn .num{color:var(--hot);}
+.stat.ok .num{color:var(--good);}
+button{
+  font-family:inherit; cursor:pointer; border-radius:6px; border:1px solid var(--line);
+  background:var(--surface2); color:var(--text); padding:8px 14px; font-size:.85rem;
+}
+button:hover{border-color:var(--accent);}
+button.primary{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600;}
+button.ghost{background:transparent;}
+button.small{padding:5px 9px; font-size:.75rem;}
+main{padding:18px 20px 60px; max-width:1400px; margin:0 auto;}
+.toolbar{display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap;}
+select,input[type=text],input[type=date],input[type=email],input[type=url],textarea{
+  font-family:inherit; background:var(--surface); color:var(--text); border:1px solid var(--line);
+  border-radius:6px; padding:7px 9px; font-size:.85rem;
+}
+input[type=text].search{min-width:220px;}
+.tablewrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px; background:var(--surface);}
+table{border-collapse:collapse; width:100%; min-width:1080px;}
+th{
+  text-align:left; font-size:.72rem; color:var(--sub); font-weight:600; padding:10px 12px;
+  border-bottom:1px solid var(--line); white-space:nowrap;
+}
+td{padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:middle; font-size:.85rem;}
+tr:last-child td{border-bottom:none;}
+tr:hover{background:var(--surface2);}
+.leadname{font-weight:600;}
+.leadsub{color:var(--sub); font-size:.75rem; margin-top:1px;}
+.badge{
+  display:inline-block; padding:3px 9px; border-radius:99px; font-size:.72rem; font-weight:600;
+  font-family:"IBM Plex Mono",monospace;
+}
+.badge.hot{background:rgba(232,98,61,.18); color:var(--hot);}
+.badge.warm{background:rgba(232,168,61,.18); color:var(--warm);}
+.badge.cold{background:rgba(91,138,199,.18); color:var(--cold);}
+.datecell{font-family:"IBM Plex Mono",monospace; font-size:.8rem;}
+.datecell.overdue{color:var(--hot); font-weight:600;}
+.datecell.today{color:var(--warm); font-weight:600;}
+.actions{display:flex; gap:6px;}
+.angle{max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--sub); font-size:.78rem;}
+.modal{position:fixed; inset:0; background:rgba(0,0,0,.5); display:flex; align-items:flex-start; justify-content:center; padding:40px 16px; overflow:auto; z-index:20;}
+.modal.hidden{display:none;}
+.modalcard{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:22px; width:100%; max-width:560px;}
+.modalcard h2{margin:0 0 4px; font-size:1.1rem;}
+.modalcard p.hint{color:var(--sub); font-size:.78rem; margin:0 0 16px;}
+.field{margin-bottom:12px;}
+.field label{display:block; font-size:.75rem; color:var(--sub); margin-bottom:4px;}
+.field input,.field select,.field textarea{width:100%;}
+.field.row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.modalfoot{display:flex; justify-content:flex-end; gap:8px; margin-top:16px;}
+.empty{padding:40px 20px; text-align:center; color:var(--sub);}
+@media (max-width:720px){
+  table{min-width:920px;}
+  .stats{gap:14px;}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Ledger</div>
+  <div class="stats">
+    <div class="stat"><span class="num mono" id="statQuota">0 / 0</span><span class="lbl">contacted this week</span></div>
+    <div class="stat" id="statDueWrap"><span class="num mono" id="statDue">0</span><span class="lbl">due today</span></div>
+    <div class="stat" id="statOverdueWrap"><span class="num mono" id="statOverdue">0</span><span class="lbl">overdue</span></div>
+    <div class="stat"><span class="num mono" id="statHot">0</span><span class="lbl">hot leads</span></div>
+  </div>
+  <button id="settingsBtn">Settings</button>
+</header>
+<main>
+  <div class="toolbar">
+    <button class="primary" id="addLeadBtn">+ Add lead</button>
+    <select id="filterStage"></select>
+    <select id="filterHeat">
+      <option value="">All heat</option>
+      <option value="hot">Hot</option>
+      <option value="warm">Warm</option>
+      <option value="cold">Cold</option>
+    </select>
+    <input type="text" class="search" id="search" placeholder="Search name, contact, source…">
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Lead</th><th>Angle</th><th>Stage</th><th>Heat</th>
+          <th>Touches</th><th>Last touch</th><th>Next follow-up</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="leadsBody"></tbody>
+    </table>
+    <div class="empty" id="emptyState" style="display:none;">No leads yet. Add your first lead to start tracking.</div>
+  </div>
+</main>
+
+<div class="modal hidden" id="leadModal">
+  <div class="modalcard">
+    <h2 id="leadModalTitle">Add lead</h2>
+    <p class="hint">Core details you'll want when you follow up.</p>
+    <div class="field"><label>Business / lead name</label><input type="text" id="f_name"></div>
+    <div class="field row2">
+      <div><label>Contact name</label><input type="text" id="f_contact"></div>
+      <div><label>Email</label><input type="email" id="f_email"></div>
+    </div>
+    <div class="field row2">
+      <div><label>Website</label><input type="url" id="f_website"></div>
+      <div><label>Source</label><input type="text" id="f_source" placeholder="e.g. Google Maps, referral"></div>
+    </div>
+    <div class="field"><label>Angle / what's broken or your hook</label><textarea id="f_angle" rows="2"></textarea></div>
+    <div class="field row2">
+      <div><label>Stage</label><select id="f_stage"></select></div>
+      <div><label>Heat</label><select id="f_heat"><option value="warm">Warm</option><option value="hot">Hot</option><option value="cold">Cold</option></select></div>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="f_notes" rows="2"></textarea></div>
+    <div class="modalfoot">
+      <button class="ghost" id="leadCancel">Cancel</button>
+      <button class="primary" id="leadSave">Save lead</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal hidden" id="settingsModal">
+  <div class="modalcard">
+    <h2>Settings</h2>
+    <p class="hint">Customize this to fit however you're running outreach right now.</p>
+    <div class="field"><label>Weekly outreach quota (new contacts per week)</label><input type="text" id="s_quota"></div>
+    <div class="field"><label>Follow-up cadence (days after each touch, comma separated)</label><input type="text" id="s_cadence" placeholder="0, 3, 7, 14"></div>
+    <div class="field"><label>Auto-mark cold after this many days with no reply</label><input type="text" id="s_colddays"></div>
+    <div class="field"><label>Pipeline stages (comma separated, in order)</label><input type="text" id="s_stages"></div>
+    <div class="modalfoot">
+      <button class="ghost" id="resetData">Erase all data</button>
+      <button class="ghost" id="settingsCancel">Close</button>
+      <button class="primary" id="settingsSave">Save settings</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const LS_LEADS='ldg_leads', LS_SETTINGS='ldg_settings';
+const defaultSettings={
+  quota:20,
+  cadence:[0,3,7,14],
+  coldDays:10,
+  stages:['Sourced','Contacted','Followed up','Responded','Booked','Proposal sent','Won','Lost']
+};
+let settings=loadSettings();
+let leads=loadLeads();
+let editingId=null;
+
+function loadSettings(){
+  try{ const s=JSON.parse(localStorage.getItem(LS_SETTINGS)); return s?Object.assign({},defaultSettings,s):Object.assign({},defaultSettings);}
+  catch(e){ return Object.assign({},defaultSettings); }
+}
+function saveSettings(){ try{ localStorage.setItem(LS_SETTINGS, JSON.stringify(settings)); }catch(e){} }
+function loadLeads(){ try{ return JSON.parse(localStorage.getItem(LS_LEADS))||[]; }catch(e){ return []; } }
+function saveLeads(){ try{ localStorage.setItem(LS_LEADS, JSON.stringify(leads)); }catch(e){} }
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function addDays(dateStr,n){ const d=new Date(dateStr+'T00:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function daysBetween(a,b){ return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000); }
+function startOfWeek(){ const d=new Date(); const day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); return d.toISOString().slice(0,10); }
+
+function computeHeat(lead){
+  if(lead.heatPinned) return lead.heat;
+  if(lead.stage==='Won' || lead.stage==='Booked' || lead.stage==='Proposal sent') return 'hot';
+  if(lead.stage==='Lost') return 'cold';
+  if(lead.stage==='Responded') return 'hot';
+  if(lead.lastTouch){
+    const d=daysBetween(lead.lastTouch, todayStr());
+    if(d>=settings.coldDays) return 'cold';
+  }
+  return lead.touches>0 ? 'warm' : 'warm';
+}
+
+function populateStageSelects(){
+  const opts=settings.stages.map(s=>`<option value="${escAttr(s)}">${escHtml(s)}</option>`).join('');
+  document.getElementById('f_stage').innerHTML=opts;
+  document.getElementById('filterStage').innerHTML='<option value="">All stages</option>'+opts;
+}
+function escHtml(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escAttr(s){ return escHtml(s); }
+
+function openLeadModal(id){
+  editingId=id||null;
+  populateStageSelects();
+  const l=id? leads.find(x=>x.id===id) : null;
+  document.getElementById('leadModalTitle').textContent= l? 'Edit lead':'Add lead';
+  document.getElementById('f_name').value=l?l.name:'';
+  document.getElementById('f_contact').value=l?l.contact:'';
+  document.getElementById('f_email').value=l?l.email:'';
+  document.getElementById('f_website').value=l?l.website:'';
+  document.getElementById('f_source').value=l?l.source:'';
+  document.getElementById('f_angle').value=l?l.angle:'';
+  document.getElementById('f_notes').value=l?l.notes:'';
+  document.getElementById('f_stage').value=l?l.stage:settings.stages[0];
+  document.getElementById('f_heat').value=l?l.heat:'warm';
+  document.getElementById('leadModal').classList.remove('hidden');
+}
+function closeLeadModal(){ document.getElementById('leadModal').classList.add('hidden'); }
+
+function saveLeadFromForm(){
+  const name=document.getElementById('f_name').value.trim();
+  if(!name){ document.getElementById('f_name').focus(); return; }
+  const data={
+    name, contact:document.getElementById('f_contact').value.trim(),
+    email:document.getElementById('f_email').value.trim(),
+    website:document.getElementById('f_website').value.trim(),
+    source:document.getElementById('f_source').value.trim(),
+    angle:document.getElementById('f_angle').value.trim(),
+    notes:document.getElementById('f_notes').value.trim(),
+    stage:document.getElementById('f_stage').value,
+    heat:document.getElementById('f_heat').value,
+    heatPinned:true
+  };
+  if(editingId){
+    const l=leads.find(x=>x.id===editingId); Object.assign(l,data);
+  } else {
+    leads.push(Object.assign({
+      id:'l'+Date.now()+Math.random().toString(36).slice(2,7),
+      touches:0, lastTouch:null, nextFollowUp:todayStr(), contactedDate:null
+    },data));
+  }
+  saveLeads(); closeLeadModal(); render();
+}
+
+function logTouch(id){
+  const l=leads.find(x=>x.id===id); if(!l) return;
+  const t=todayStr();
+  if(!l.contactedDate) l.contactedDate=t;
+  l.lastTouch=t; l.touches=(l.touches||0)+1;
+  const idx=Math.min(l.touches, settings.cadence.length-1);
+  l.nextFollowUp=addDays(t, settings.cadence[idx]||7);
+  const stages=settings.stages;
+  const curIdx=stages.indexOf(l.stage);
+  if(l.stage===stages[0]) l.stage= stages[1]||l.stage;
+  else if(curIdx>=1 && curIdx<2 && stages[2]) l.stage=stages[2];
+  if(!l.heatPinned) l.heat=computeHeat(l);
+  saveLeads(); render();
+}
+function deleteLead(id){
+  if(!confirm('Delete this lead? This cannot be undone.')) return;
+  leads=leads.filter(x=>x.id!==id); saveLeads(); render();
+}
+function setNextFollowUp(id,val){
+  const l=leads.find(x=>x.id===id); if(l){ l.nextFollowUp=val; saveLeads(); }
+}
+function setStage(id,val){
+  const l=leads.find(x=>x.id===id); if(l){ l.stage=val; if(!l.heatPinned) l.heat=computeHeat(l); saveLeads(); render(); }
+}
+function setHeat(id,val){
+  const l=leads.find(x=>x.id===id); if(l){ l.heat=val; l.heatPinned=true; saveLeads(); render(); }
+}
+
+function render(){
+  populateStageSelects();
+  const filterStage=document.getElementById('filterStage').value;
+  const filterHeat=document.getElementById('filterHeat').value;
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  document.getElementById('filterStage').value=filterStage;
+  document.getElementById('filterHeat').value=filterHeat;
+
+  leads.forEach(l=>{ if(!l.heatPinned) l.heat=computeHeat(l); });
+
+  const t=todayStr();
+  const weekStart=startOfWeek();
+  const contactedThisWeek=leads.filter(l=>l.contactedDate && l.contactedDate>=weekStart).length;
+  const dueToday=leads.filter(l=>l.nextFollowUp===t && l.stage!=='Won' && l.stage!=='Lost').length;
+  const overdue=leads.filter(l=>l.nextFollowUp<t && l.stage!=='Won' && l.stage!=='Lost').length;
+  const hot=leads.filter(l=>l.heat==='hot').length;
+
+  document.getElementById('statQuota').textContent=`${contactedThisWeek} / ${settings.quota}`;
+  document.getElementById('statDue').textContent=dueToday;
+  document.getElementById('statOverdue').textContent=overdue;
+  document.getElementById('statHot').textContent=hot;
+  document.getElementById('statOverdueWrap').className='stat'+(overdue>0?' warn':'');
+  document.getElementById('statDueWrap').className='stat'+(dueToday>0?' warn':'');
+
+  let list=leads.filter(l=>{
+    if(filterStage && l.stage!==filterStage) return false;
+    if(filterHeat && l.heat!==filterHeat) return false;
+    if(q){
+      const hay=(l.name+' '+l.contact+' '+l.source+' '+l.email).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b)=> (a.nextFollowUp||'9999').localeCompare(b.nextFollowUp||'9999'));
+
+  const body=document.getElementById('leadsBody');
+  document.getElementById('emptyState').style.display= leads.length? 'none':'block';
+  body.innerHTML=list.map(l=>{
+    const nfClass = l.nextFollowUp<t?'overdue': (l.nextFollowUp===t?'today':'');
+    const stageOpts=settings.stages.map(s=>`<option value="${escAttr(s)}" ${s===l.stage?'selected':''}>${escHtml(s)}</option>`).join('');
+    return `<tr>
+      <td>
+        <div class="leadname">${escHtml(l.name)}</div>
+        <div class="leadsub">${escHtml(l.contact||'')}${l.email?' · '+escHtml(l.email):''}${l.source?' · '+escHtml(l.source):''}</div>
+      </td>
+      <td><div class="angle" title="${escAttr(l.angle||'')}">${escHtml(l.angle||'—')}</div></td>
+      <td><select onchange="setStage('${l.id}',this.value)">${stageOpts}</select></td>
+      <td><select class="badge ${l.heat}" onchange="setHeat('${l.id}',this.value)">
+            <option value="hot" ${l.heat==='hot'?'selected':''}>Hot</option>
+            <option value="warm" ${l.heat==='warm'?'selected':''}>Warm</option>
+            <option value="cold" ${l.heat==='cold'?'selected':''}>Cold</option>
+          </select></td>
+      <td class="mono">${l.touches||0}</td>
+      <td class="datecell">${l.lastTouch||'—'}</td>
+      <td><input type="date" class="datecell ${nfClass}" value="${l.nextFollowUp||''}" onchange="setNextFollowUp('${l.id}',this.value)"></td>
+      <td class="actions">
+        <button class="small" onclick="logTouch('${l.id}')">Log touch</button>
+        <button class="small ghost" onclick="openLeadModal('${l.id}')">Edit</button>
+        <button class="small ghost" onclick="deleteLead('${l.id}')">Delete</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openSettings(){
+  document.getElementById('s_quota').value=settings.quota;
+  document.getElementById('s_cadence').value=settings.cadence.join(', ');
+  document.getElementById('s_colddays').value=settings.coldDays;
+  document.getElementById('s_stages').value=settings.stages.join(', ');
+  document.getElementById('settingsModal').classList.remove('hidden');
+}
+function closeSettings(){ document.getElementById('settingsModal').classList.add('hidden'); }
+function saveSettingsFromForm(){
+  const quota=parseInt(document.getElementById('s_quota').value,10);
+  const cadence=document.getElementById('s_cadence').value.split(',').map(x=>parseInt(x.trim(),10)).filter(n=>!isNaN(n));
+  const coldDays=parseInt(document.getElementById('s_colddays').value,10);
+  const stages=document.getElementById('s_stages').value.split(',').map(x=>x.trim()).filter(Boolean);
+  settings.quota= isNaN(quota)?settings.quota:quota;
+  settings.cadence= cadence.length?cadence:settings.cadence;
+  settings.coldDays= isNaN(coldDays)?settings.coldDays:coldDays;
+  settings.stages= stages.length?stages:settings.stages;
+  saveSettings(); closeSettings(); render();
+}
+
+document.getElementById('addLeadBtn').onclick=()=>openLeadModal(null);
+document.getElementById('leadCancel').onclick=closeLeadModal;
+document.getElementById('leadSave').onclick=saveLeadFromForm;
+document.getElementById('settingsBtn').onclick=openSettings;
+document.getElementById('settingsCancel').onclick=closeSettings;
+document.getElementById('settingsSave').onclick=saveSettingsFromForm;
+document.getElementById('resetData').onclick=()=>{
+  if(confirm('Erase every lead? This cannot be undone.')){ leads=[]; saveLeads(); closeSettings(); render(); }
+};
+document.getElementById('filterStage').onchange=render;
+document.getElementById('filterHeat').onchange=render;
+document.getElementById('search').oninput=render;
+
+render();
+</script>
+</body>
+</html>
